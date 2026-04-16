@@ -249,14 +249,14 @@ async function main() {
         log(`优化目录: ${optimizedDir}`, colors.dim);
 
         const state = readState();
-        const jobs = buildJobs(originalDir, optimizedDir, state);
+        const initialJobs = buildJobs(originalDir, optimizedDir, state);
 
-        if (jobs.length === 0) {
+        if (initialJobs.length === 0) {
             log('没有待处理章节（可能都已处理或未识别标题）', colors.yellow);
             return;
         }
 
-        log(`待处理章节: ${jobs.length}`, colors.green);
+        log(`初始待处理章节: ${initialJobs.length}`, colors.green);
 
         log('Phase 3: 启动浏览器并连接 DeepSeek...', colors.blue);
         ({ context, page } = await launchBrowser());
@@ -273,11 +273,18 @@ async function main() {
             await sendAndWaitResponse(page, buildOptimizationPrompt(), '系统角色激活');
         }
 
-        log('Phase 4: 严格串行逐章优化...', colors.magenta + colors.bright);
-        for (let i = 0; i < jobs.length; i++) {
-            const job = jobs[i];
+        log('Phase 4: 严格串行逐章优化（动态重扫）...', colors.magenta + colors.bright);
+        let processedCount = 0;
+
+        while (true) {
+            const jobs = buildJobs(originalDir, optimizedDir, state);
+            if (jobs.length === 0) break;
+
+            const job = jobs[0];
+            processedCount += 1;
+
             log('='.repeat(60), colors.cyan);
-            log(`章节 ${i + 1}/${jobs.length}: ${job.title}`, colors.bright + colors.cyan);
+            log(`章节 ${processedCount}（当前队列${jobs.length}）: ${job.title}`, colors.bright + colors.cyan);
             log(`只发送正文: ${job.body.length} 字符`, colors.dim);
 
             const response = await sendAndWaitResponse(page, buildSegmentPrompt(job.body), `章节优化_${job.title}`);
@@ -303,11 +310,11 @@ async function main() {
             writeState(state);
 
             log(`已复制并保存: ${job.outputPath}`, colors.green);
-            log('已完成当前章节，准备进入下一章', colors.dim);
+            log('已完成当前章节，准备重扫目录获取下一章（可识别运行中新增文件）', colors.dim);
         }
 
         log('='.repeat(60), colors.cyan);
-        log('全部章节优化完成（仅单章输出，不合并）', colors.bright + colors.green);
+        log(`全部章节优化完成（共处理${processedCount}章，仅单章输出，不合并）`, colors.bright + colors.green);
     } catch (error) {
         log(`致命错误: ${error.message}`, colors.red);
         alert();
@@ -329,6 +336,8 @@ async function main() {
 }
 
 main();
+
+
 
 
 
