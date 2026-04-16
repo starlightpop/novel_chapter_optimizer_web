@@ -1,0 +1,13 @@
+﻿{
+  "name": "novel-chapter-optimizer-web",
+  "version": "1.0.0",
+  "description": "Chapter-only novel optimization via DeepSeek web",
+  "type": "module",
+  "scripts": {
+    "start": "node src/optimize.js",
+    "check": "node --check src/optimize.js && node --check src/chapterTools.js && node --check src/ruleSync.js && node --check src/prompts.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

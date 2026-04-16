@@ -1,0 +1,8 @@
+﻿node_modules/
+.npm-cache/
+browser_data/
+screenshots/
+data/
+workspace/
+*.log
+.DS_Store
